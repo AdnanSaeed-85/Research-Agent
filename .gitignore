@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+.env
+myenv
+CONFIG.py
+ffmpeg.exe
+ffplay.exe
+ffprobe.exe
