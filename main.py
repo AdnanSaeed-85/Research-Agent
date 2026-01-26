@@ -107,7 +107,7 @@ def tools_with_logging(state: create_state):
 def main():
     DB_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
     
-    config = {'configurable': {'user_name': 'config_1', 'thread_id': 'thread_1'}}
+    config = {'configurable': {'user_name': 'config_2', 'thread_id': 'thread_2'}}
 
     with PostgresStore.from_conn_string(DB_URI) as store, \
     PostgresSaver.from_conn_string(DB_URI) as checkpointer:
