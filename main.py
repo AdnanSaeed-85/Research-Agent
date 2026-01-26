@@ -131,11 +131,18 @@ def main():
         while True:
             user_input = input('You: ')
             if user_input in ['exit', 'bye', 'clear']:
-                print('Thanks for calling')
+                print('Thanks for calling\n')
                 break
 
             response = graph.invoke({'messages': HumanMessage(content=user_input)}, config)
             print(f"Ai: {response['messages'][-1].content}\n")
+
+            namespace = ('user', config['configurable']['user_name'], 'details')
+            output = store.search(namespace)
+            print('\nLong-Term-Memory has...')
+            for i in output:
+                print(i.value['data'])
+            print()
 
 if __name__ == '__main__':
     main()
