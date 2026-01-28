@@ -15,7 +15,8 @@ import uuid
 from tools import add_tool
 from langgraph.store.postgres import PostgresStore
 from langgraph.checkpoint.postgres import PostgresSaver
-
+from langsmith import traceable
+from RAG_Tool import rag_search
 
 # --------------------------- Pydantic Classes -----------------------------
 class pydantic_1(BaseModel):
@@ -29,7 +30,7 @@ class pydantic_2(BaseModel):
 # ------------------------- .env load, Tools & LLM init ----------------------------
 load_dotenv()
 
-tools = [add_tool]
+tools = [add_tool, rag_search]
 
 llm = ChatGroq(model=GROQ_MODEL, temperature=0.2)
 pydantic_llm = llm.with_structured_output(pydantic_2)
@@ -43,6 +44,7 @@ class create_state(TypedDict):
 
 # ---------------------------- ALL NODES -----------------------------
 # ------------ Remember Node ------------
+@traceable(name='Remember node (Search + Store)')
 def remember_node(state: create_state, config: RunnableConfig, store: BaseStore):
     try:
         "this node is used for remember items from memory"
@@ -76,6 +78,7 @@ def remember_node(state: create_state, config: RunnableConfig, store: BaseStore)
     return {'messages': []}
 
 # ------------ Chat Node -----------
+@traceable(name='Chat node with personalized response')
 def chat_node(state: create_state, config: RunnableConfig, store: BaseStore):
     "This Chat Node is used for chatting with personalization"
     config = config['configurable']['user_name']
@@ -96,10 +99,11 @@ def chat_node(state: create_state, config: RunnableConfig, store: BaseStore):
 # ------------ Tool Node -----------    
 tool_node = ToolNode(tools)
 
+@traceable(name='Tool Node')
 def tools_with_logging(state: create_state):
     print(f"⚙️ Executing tools...")
     result = tool_node.invoke(state)
-    print(f"✅ Tool execution completed\n")
+    print(f"\n✅ Tool execution completed\n")
     return result
 
 
@@ -107,7 +111,7 @@ def tools_with_logging(state: create_state):
 def main():
     DB_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
     
-    config = {'configurable': {'user_name': 'config_2', 'thread_id': 'thread_2'}}
+    config = {'configurable': {'user_name': 'config_4', 'thread_id': 'thread_4'}}
 
     with PostgresStore.from_conn_string(DB_URI) as store, \
     PostgresSaver.from_conn_string(DB_URI) as checkpointer:
@@ -134,9 +138,20 @@ def main():
                 print('Thanks for calling\n')
                 break
 
-            response = graph.invoke({'messages': HumanMessage(content=user_input)}, config)
-            print(f"Ai: {response['messages'][-1].content}\n")
-
+            print("Assistant: ", end="", flush=True)
+            
+            # Stream with messages mode to get token-by-token streaming
+            for chunk in graph.stream({'messages': HumanMessage(content=user_input)}, config, stream_mode="messages"):
+                # chunk is a tuple: (message, metadata)
+                msg, metadata = chunk
+                
+                # Only stream AI message content chunks
+                if isinstance(msg, AIMessage) and hasattr(msg, 'content') and msg.content:
+                    print(msg.content, end="", flush=True)
+            
+            print()  # New line after response
+            
+            # Show memory
             namespace = ('user', config['configurable']['user_name'], 'details')
             output = store.search(namespace)
             print('\nLong-Term-Memory has...')
