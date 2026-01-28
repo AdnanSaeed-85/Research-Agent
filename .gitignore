@@ -14,3 +14,4 @@ CONFIG.py
 ffmpeg.exe
 ffplay.exe
 ffprobe.exe
+test.py

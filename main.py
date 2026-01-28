@@ -111,7 +111,7 @@ def tools_with_logging(state: create_state):
 def main():
     DB_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
     
-    config = {'configurable': {'user_name': 'config_4', 'thread_id': 'thread_4'}}
+    config = {'configurable': {'user_name': 'user_1', 'thread_id': 'new_thread'}}
 
     with PostgresStore.from_conn_string(DB_URI) as store, \
     PostgresSaver.from_conn_string(DB_URI) as checkpointer:
@@ -140,18 +140,11 @@ def main():
 
             print("Assistant: ", end="", flush=True)
             
-            # Stream with messages mode to get token-by-token streaming
             for chunk in graph.stream({'messages': HumanMessage(content=user_input)}, config, stream_mode="messages"):
-                # chunk is a tuple: (message, metadata)
-                msg, metadata = chunk
-                
-                # Only stream AI message content chunks
+                msg, _ = chunk
                 if isinstance(msg, AIMessage) and hasattr(msg, 'content') and msg.content:
                     print(msg.content, end="", flush=True)
-            
-            print()  # New line after response
-            
-            # Show memory
+            print()
             namespace = ('user', config['configurable']['user_name'], 'details')
             output = store.search(namespace)
             print('\nLong-Term-Memory has...')
@@ -161,3 +154,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    

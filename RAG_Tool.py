@@ -5,6 +5,8 @@ from langsmith import traceable
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.tools import tool
+from langchain_groq import ChatGroq
+from CONFIG import GROQ_MODEL
 
 load_dotenv()
 
@@ -29,10 +31,8 @@ def build_vector_store(file_path: str, chunk_size: int = 1000, chunk_overlap: in
     vector_store = vector_database(splitted, 'text-embedding-3-small')
     return vector_store
 
-# Build once at module load
 VECTOR_STORE = build_vector_store('AI_Agent.pdf')
 
-# Now create the tool
 @tool
 def rag_search(query: str) -> str:
     """
@@ -43,12 +43,14 @@ def rag_search(query: str) -> str:
     """
     docs = VECTOR_STORE.similarity_search(query, k=3)
     context = "\n\n".join([doc.page_content for doc in docs])
-    llm = ChatOpenAI(model='gpt-4o-mini')
-    prompt = f"""Answer the question based on the context below.
-    Context:
-    {context}
+    llm = ChatGroq(model=GROQ_MODEL)
+
+    prompt = f"""
+    Answer the question based on the context below.
+    Context:{context}
     Question: {query}
-    Answer:"""
+    Answer:
+    """
     
     response = llm.invoke(prompt)
     return response.content
