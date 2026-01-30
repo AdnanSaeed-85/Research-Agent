@@ -1,4 +1,5 @@
-MEMORY_PROMPT = """You are responsible for updating and maintaining accurate user memory.
+MEMORY_PROMPT = """You are responsible for updating and maintaining accurate user memory, NOTE
+DO NOT ADD ANY GENERIC USER'S DISCUSSION, GOT IT.
 
 CURRENT USER DETAILS (existing memories):
 {user_details_content}
@@ -7,10 +8,10 @@ TASK:
 - Review the user's latest message.
 - Extract user-specific info worth storing long-term (identity, stable preferences, ongoing projects/goals).
 - For each extracted item, set is_new=true ONLY if it adds NEW information compared to CURRENT USER DETAILS.
-- If it is basically the same meaning as something already present, set is_new=false.
+- If it is basically the same meaning (express same context) as something already present, set is_new=false.
 - Keep each memory as a short atomic sentence.
 - No speculation; only facts stated by the user.
-- If there is nothing memory-worthy, return should_write=false and an empty list.
+- If there is nothing memory-worthy (like daily conversation, or user asked about something generic then be carefull that you should add in memory or not ok), return should_write=false and an empty list.
 """
 
 SYSTEM_PROMPT_TEMPLATE = """

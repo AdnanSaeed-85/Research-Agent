@@ -1,4 +1,4 @@
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langsmith import traceable
@@ -51,6 +51,5 @@ def rag_search(query: str) -> str:
     Question: {query}
     Answer:
     """
-    
     response = llm.invoke(prompt)
     return response.content
