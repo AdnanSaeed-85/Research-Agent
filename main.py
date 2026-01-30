@@ -131,27 +131,28 @@ def main():
         builder.add_edge('tools', 'chat_node')
 
         graph = builder.compile(store=store, checkpointer=checkpointer)
+        return graph, config, store, checkpointer
 
-        while True:
-            user_input = input('You: ')
-            if user_input in ['exit', 'bye', 'clear']:
-                print('Thanks for calling\n')
-                break
+        # while True:
+        #     user_input = input('You: ')
+        #     if user_input in ['exit', 'bye', 'clear']:
+        #         print('Thanks for calling\n')
+        #         break
 
-            print("Assistant: ", end="", flush=True)
+        #     print("Assistant: ", end="", flush=True)
             
-            for chunk in graph.stream({'messages': HumanMessage(content=user_input)}, config, stream_mode="messages"):
-                msg, _ = chunk
-                if isinstance(msg, AIMessage) and hasattr(msg, 'content') and msg.content:
-                    print(msg.content, end="", flush=True)
-            print()
-            namespace = ('user', config['configurable']['user_name'], 'details')
-            output = store.search(namespace)
-            print('\nLong-Term-Memory has...')
-            for i in output:
-                print(i.value['data'])
-            print()
+        #     for chunk in graph.stream({'messages': HumanMessage(content=user_input)}, config, stream_mode="messages"):
+        #         msg, _ = chunk
+        #         if isinstance(msg, AIMessage) and hasattr(msg, 'content') and msg.content:
+        #             print(msg.content, end="", flush=True)
+        #     print()
+        #     namespace = ('user', config['configurable']['user_name'], 'details')
+        #     output = store.search(namespace)
+        #     print('\nLong-Term-Memory has...')
+        #     for i in output:
+        #         print(i.value['data'])
+        #     print()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
     
