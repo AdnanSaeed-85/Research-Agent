@@ -108,31 +108,33 @@ def tools_with_logging(state: create_state):
 
 
 # ---------------------------- ALL NODES -----------------------------
+import psycopg_pool
+
+DB_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
+
 def main():
-    DB_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
-    
     config = {'configurable': {'user_name': 'user_2', 'thread_id': 'thread_2'}}
+    
+    # Create connection pool instead of single connection
+    pool = psycopg_pool.ConnectionPool(DB_URI, min_size=1, max_size=10)
+    
+    store = PostgresStore(conn=pool)
+    checkpointer = PostgresSaver(conn=pool)
+    
+    store.setup()
+    checkpointer.setup()
 
-    with PostgresStore.from_conn_string(DB_URI) as store, \
-    PostgresSaver.from_conn_string(DB_URI) as checkpointer:
-        
-        store.setup()
-        checkpointer.setup()
+    builder = StateGraph(create_state)
+    builder.add_node('remember_node', remember_node)
+    builder.add_node('chat_node', chat_node)
+    builder.add_node('tools', tools_with_logging)
+    builder.add_edge(START, 'remember_node')
+    builder.add_edge('remember_node', 'chat_node')
+    builder.add_conditional_edges('chat_node', tools_condition)
+    builder.add_edge('tools', 'chat_node')
 
-        builder = StateGraph(create_state)
-
-        builder.add_node('remember_node', remember_node)
-        builder.add_node('chat_node', chat_node)
-        builder.add_node('tools', tools_with_logging)
-
-        builder.add_edge(START, 'remember_node')
-        builder.add_edge('remember_node', 'chat_node')
-        builder.add_conditional_edges('chat_node', tools_condition)
-        builder.add_edge('tools', 'chat_node')
-
-        graph = builder.compile(store=store, checkpointer=checkpointer)
-        return graph, config, store, checkpointer
-
+    graph = builder.compile(store=store, checkpointer=checkpointer)
+    return graph, config
         # while True:
         #     user_input = input('You: ')
         #     if user_input in ['exit', 'bye', 'clear']:
