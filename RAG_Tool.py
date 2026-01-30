@@ -1,4 +1,4 @@
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langsmith import traceable
@@ -6,7 +6,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
-from CONFIG import GROQ_MODEL
+from CONFIG import GROQ_MODEL, OPENAI_MODEL
 
 load_dotenv()
 
@@ -43,7 +43,8 @@ def rag_search(query: str) -> str:
     """
     docs = VECTOR_STORE.similarity_search(query, k=3)
     context = "\n\n".join([doc.page_content for doc in docs])
-    llm = ChatGroq(model=GROQ_MODEL)
+    # llm = ChatGroq(model=GROQ_MODEL)
+    llm = ChatOpenAI(model='gpt-4o-mini')
 
     prompt = f"""
     Answer the question based on the context below.

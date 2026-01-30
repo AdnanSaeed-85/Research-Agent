@@ -17,6 +17,7 @@ from langgraph.store.postgres import PostgresStore
 from langgraph.checkpoint.postgres import PostgresSaver
 from langsmith import traceable
 from RAG_Tool import rag_search
+from langchain_openai import ChatOpenAI
 
 # --------------------------- Pydantic Classes -----------------------------
 class pydantic_1(BaseModel):
@@ -32,7 +33,8 @@ load_dotenv()
 
 tools = [add_tool, rag_search]
 
-llm = ChatGroq(model=GROQ_MODEL, temperature=0.2)
+# llm = ChatGroq(model=GROQ_MODEL, temperature=0.2)
+llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.2)
 pydantic_llm = llm.with_structured_output(pydantic_2)
 llm_with_tools = llm.bind_tools(tools)
 
@@ -125,9 +127,11 @@ def main():
     checkpointer.setup()
 
     builder = StateGraph(create_state)
+
     builder.add_node('remember_node', remember_node)
     builder.add_node('chat_node', chat_node)
     builder.add_node('tools', tools_with_logging)
+
     builder.add_edge(START, 'remember_node')
     builder.add_edge('remember_node', 'chat_node')
     builder.add_conditional_edges('chat_node', tools_condition)
@@ -135,26 +139,3 @@ def main():
 
     graph = builder.compile(store=store, checkpointer=checkpointer)
     return graph, config
-        # while True:
-        #     user_input = input('You: ')
-        #     if user_input in ['exit', 'bye', 'clear']:
-        #         print('Thanks for calling\n')
-        #         break
-
-        #     print("Assistant: ", end="", flush=True)
-            
-        #     for chunk in graph.stream({'messages': HumanMessage(content=user_input)}, config, stream_mode="messages"):
-        #         msg, _ = chunk
-        #         if isinstance(msg, AIMessage) and hasattr(msg, 'content') and msg.content:
-        #             print(msg.content, end="", flush=True)
-        #     print()
-        #     namespace = ('user', config['configurable']['user_name'], 'details')
-        #     output = store.search(namespace)
-        #     print('\nLong-Term-Memory has...')
-        #     for i in output:
-        #         print(i.value['data'])
-        #     print()
-
-# if __name__ == '__main__':
-#     main()
-    
