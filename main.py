@@ -115,7 +115,7 @@ import psycopg_pool
 DB_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
 
 def main():
-    config = {'configurable': {'user_name': 'update', 'thread_id': 'thread_2'}}
+    config = {'configurable': {'user_name': 'update_2', 'thread_id': 'thread_2'}}
     
     # Create connection pool instead of single connection
     pool = psycopg_pool.ConnectionPool(DB_URI, min_size=1, max_size=10)

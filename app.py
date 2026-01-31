@@ -97,6 +97,33 @@ def create_new_thread():
     
     return gr.update(choices=threads, value=new_thread_id), []
 
+def refresh_users():
+    users = get_users()
+    return gr.update(choices=users)
+
+def create_new_user(new_user_name):
+    global current_user_id, current_thread_id
+    
+    if not new_user_name.strip():
+        return gr.update(), gr.update(), [], ""
+    
+    graph, config = main()
+    new_user_name = new_user_name.strip()
+    new_thread_id = f"thread_{uuid.uuid4().hex[:8]}"
+    
+    config['configurable']['user_name'] = new_user_name
+    config['configurable']['thread_id'] = new_thread_id
+    
+    graph.invoke({'messages': [HumanMessage(content="Initialize")]}, config)
+    
+    current_user_id = new_user_name
+    current_thread_id = new_thread_id
+    
+    users = get_users()
+    threads = get_threads_for_user(current_user_id)
+    
+    return gr.update(choices=users, value=current_user_id), gr.update(choices=threads, value=current_thread_id), [], ""
+
 users = get_users()
 current_user_id = users[0] if users else None
 initial_threads = get_threads_for_user(current_user_id) if current_user_id else []
@@ -106,7 +133,13 @@ with gr.Blocks(css="#chatbot {height: 600px;}", theme=gr.themes.Soft()) as demo:
     with gr.Row():
         with gr.Column(scale=1):
             gr.Markdown("## 👤 Users")
-            user_dropdown = gr.Dropdown(choices=users, label="Select User", value=current_user_id)
+            
+            with gr.Row():
+                user_dropdown = gr.Dropdown(choices=users, label="Select User", value=current_user_id, scale=3)
+                refresh_btn = gr.Button("🔄", scale=1)
+            
+            new_user_input = gr.Textbox(placeholder="New user name", show_label=False)
+            create_user_btn = gr.Button("➕ Create User", variant="secondary")
             
             gr.Markdown("## 📂 Threads")
             thread_dropdown = gr.Dropdown(choices=initial_threads, label="Select Thread", value=current_thread_id)
@@ -126,5 +159,7 @@ with gr.Blocks(css="#chatbot {height: 600px;}", theme=gr.themes.Soft()) as demo:
     msg_box.submit(chat, [msg_box, chatbot], [chatbot, msg_box])
     load_btn.click(load_thread_history, [thread_dropdown], [chatbot])
     new_thread_btn.click(create_new_thread, [], [thread_dropdown, chatbot])
+    refresh_btn.click(refresh_users, [], [user_dropdown])
+    create_user_btn.click(create_new_user, [new_user_input], [user_dropdown, thread_dropdown, chatbot, new_user_input])
 
 demo.launch()

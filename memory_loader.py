@@ -1,7 +1,6 @@
 from langgraph.store.postgres import PostgresStore
 from langgraph.checkpoint.postgres import PostgresSaver
 from CONFIG import POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER
-
 DB_PATH = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POSTGRES_DB}?sslmode=disable"
 
 # def load_from_store(DB_PATH):
