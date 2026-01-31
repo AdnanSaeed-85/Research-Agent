@@ -26,5 +26,5 @@ dependencies = [
     "langchain-text-splitters>=1.1.0",
     "langchian>=0.2.5",
     "langchain>=1.2.7",
-    "gradio>=6.5.1",
+    "gradio>=4.0",
 ]

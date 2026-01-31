@@ -15,14 +15,61 @@ DB_PATH = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5442/{POS
 #     print()
 
 
-with PostgresSaver.from_conn_string(DB_PATH) as saver:
-    checkpoints = saver.list({})
+# with PostgresSaver.from_conn_string(DB_PATH) as saver:
+#     checkpoints = saver.list({})
     
-    for cp in checkpoints:
-        thread_id = cp.config['configurable']['thread_id']
-        messages = cp.checkpoint['channel_values'].get('messages', [])
-        print(f"\nThread: {thread_id}")
-        for msg in messages:
-            print(f"{msg.__class__.__name__}: {msg.content}")
-            if hasattr(msg, 'tool_calls') and msg.tool_calls:
-                print(f"Tools: {msg.tool_calls}")
+#     thread = []
+#     for cp in checkpoints:
+#         print(cp)
+#         thread_id = cp.config['configurable']['thread_id']
+#         if thread_id not in thread:
+#             thread.append(thread_id)
+#         messages = cp.checkpoint['channel_values'].get('messages', [])
+#         for msg in messages:
+#             # print(f"{msg.__class__.__name__}: {msg.content}")
+#             if hasattr(msg, 'tool_calls') and msg.tool_calls:
+#                 pass
+#                 # print(f"Tools: {msg.tool_calls}")
+#     print(thread)
+    
+
+def fetch_all_users_and_threads():
+    user_thread_map = set()
+
+    print("--- Connecting to Database ---")
+    
+    with PostgresSaver.from_conn_string(DB_PATH) as saver:
+        # List ALL checkpoints
+        checkpoints = saver.list({})
+        
+        for check in checkpoints:
+            # 1. Get Thread ID from Config (Reliable)
+            config = check.config.get("configurable", {})
+            thread_id = config.get("thread_id")
+            
+            if not thread_id:
+                continue
+
+            # 2. Look for User Name in TWO places
+            # Priority A: Check 'configurable' (New method)
+            user_name = config.get("user_name")
+            
+            # Priority B: Check 'metadata' (Old method / Automatic)
+            if not user_name:
+                user_name = check.metadata.get("user_name")
+            
+            # Priority C: Fallback
+            if not user_name:
+                user_name = "Unknown User"
+
+            user_thread_map.add((user_name, thread_id))
+
+    print(f"\n--- Found {len(user_thread_map)} Unique Threads ---")
+    print(f"{'USER NAME':<25} | {'THREAD ID'}")
+    print("-" * 45)
+    
+    for user, thread in sorted(list(user_thread_map)):
+        print(f"{user:<25} | {thread}")
+
+if __name__ == "__main__":
+    fetch_all_users_and_threads()
