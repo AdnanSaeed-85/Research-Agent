@@ -54,6 +54,7 @@ def remember_node(state: create_state, config: RunnableConfig, store: BaseStore)
         namespace = ('user', config, 'details')
         
         search = store.search(namespace)
+        # print(search)
         serached_items = "\n".join(i.value.get('data', '') for i in search)
 
         last_message = state['messages'][-1].content
